@@ -39,9 +39,9 @@ def addItem(l):
 	item.service=convertToNum(l[10])
 	return item
 	
-def createBill(l):
+def createBill():
 	bill=Bill()
-	bill.loc=l[1]
+	bill.loc=None
 	bill.total=0
 	bill.service=0
 	bill.date=None
@@ -72,7 +72,8 @@ def parseSalesData(month):
 		elif billId == "CheckItemID":
 				pass
 		else:
-			db[billId]=createBill(w)
+			db[billId]=createBill()
+			db[billId].loc=w[1]
 	pickle.dump(db,open("db.pickle","wb"))
 	return db
 
@@ -107,22 +108,51 @@ def tableNum(info,pay,billID,sD):
 def parseDate(info,billID,sD):
 	sD[billID].date=datetime.datetime.strptime(info[8],'%d %b %Y %H:%M:%S')
 
+def createBillID(sD,info,newID):
+	if info[2] in sD:
+		return info[2]
+	elif info[3] in sD:
+		return info[3]
+	else:
+		print("New transaction ID")
+		newID.append(info)
+
+
+
 def parsePaymentData(month,sD):
+	newID=[]
 	e=codecs.open("Reports/PaymentData"+str(month)+".csv","r",encoding="utf-8").readlines()
-	for n in range(len(e)-1):
+	for n in range(1,len(e)):
 		pay=e[n].split('"')
-		info=pay[0].split(",")
-		billID=info[2]
-		if str(billID) in sD:
-			parseDate(info,billID,sD)
-			paymentType(info,pay,billID,sD)
-			tableNum(info,pay,billID,sD)
-		else:
+		if "\r\n" in pay:
+			# needs to get rid of this line before it gets here , for timebeing fix
 			pass
-			#add function to handle not processed billID
-	return sD
+		else:
+			info=pay[0].split(",")
+			billID=createBillID(sD,info,newID)
+			if billID:
+				print(info[8])
+				parseDate(info,billID,sD)
+				if str(billID) in sD:
+					paymentType(info,pay,billID,sD)
+					tableNum(info,pay,billID,sD)
+				else:
+					pass
+					#add function to handle not processed billID
+			else:
+				billID=info[2]
+				db[billID]=createBill()
+	return sD,newID
 
 	
 y=parsePaymentData(11,db)
 		
 pickle.dump(y,open('db.pickle','wb'))
+
+newestDate=datetime.datetime(2019,11,26)
+for k in db.keys():
+	if db[k].date:
+		date=db[k].date
+		if date > newestDate:
+			print(date)
+
