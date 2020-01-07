@@ -44,6 +44,7 @@ def createBill(l):
 	bill.loc=l[1]
 	bill.total=0
 	bill.service=0
+	bill.date=None
 	return bill
 	
 	
@@ -124,4 +125,4 @@ def parsePaymentData(month,sD):
 	
 y=parsePaymentData(11,db)
 		
-	
+pickle.dump(y,open('db.pickle','wb'))
