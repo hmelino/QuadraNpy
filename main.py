@@ -21,14 +21,20 @@ class Transaction():
 class Bill():
 	items=[]
 	
-class Item():
-	pass
-
-def convertToNum(n):
-	if n:
-		return float(re.sub('[£,", ]','',n))
-	else:
+class Item:
+	
+	def strToNum(n):
+		if n:
+			return float(re.sub('[£,", ]','',n))
+		else:
 			return 0
+	
+	def __init__(self,list):
+		self.name=list[4]
+		self.server=list[6]
+		self.amount=list[7]
+		self.tPrice=Item.strToNum(list[8])
+		self.service=Item.strToNum(list[10])
 	
 def addItem(l):
 	item=Item()
@@ -65,7 +71,7 @@ def parseSalesData(month):
 		w=e[n].split(",")
 		billId=w[5]
 		if billId in db:
-			item=addItem(w)
+			item=Item(w)
 			db[billId].total+=float(item.tPrice)
 			db[billId].service+=updateService(item)
 			db[billId].items.append(item)
@@ -88,9 +94,9 @@ def paymentType(info,pay,billID,sD):
 	if pType == 'DepositRedeemed':
 		#to handle differences in report
 		if len(pay)==1:
-			sD[billID].deposit=convertToNum(info[14])
+			sD[billID].deposit=Item.strToNum(info[14])
 		else:
-			sD[billID].deposit=convertToNum(pay[3])
+			sD[billID].deposit=Item.strToNum(pay[3])
 	elif pType == 'Payment':
 		pCategory=info[10]
 		sD[billID].payType=pCategory
@@ -114,7 +120,6 @@ def createBillID(sD,info,newID):
 	elif info[3] in sD:
 		return info[3]
 	else:
-		print("New transaction ID")
 		newID.append(info)
 
 
@@ -131,7 +136,6 @@ def parsePaymentData(month,sD):
 			info=pay[0].split(",")
 			billID=createBillID(sD,info,newID)
 			if billID:
-				print(info[8])
 				parseDate(info,billID,sD)
 				if str(billID) in sD:
 					paymentType(info,pay,billID,sD)
@@ -142,7 +146,7 @@ def parsePaymentData(month,sD):
 			else:
 				billID=info[2]
 				db[billID]=createBill()
-	return sD,newID
+	return sD
 
 	
 y=parsePaymentData(11,db)
@@ -150,9 +154,3 @@ y=parsePaymentData(11,db)
 pickle.dump(y,open('db.pickle','wb'))
 
 newestDate=datetime.datetime(2019,11,26)
-for k in db.keys():
-	if db[k].date:
-		date=db[k].date
-		if date > newestDate:
-			print(date)
-
