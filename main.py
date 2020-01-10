@@ -36,15 +36,6 @@ class Item:
 		self.tPrice=Item.strToNum(list[8])
 		self.service=Item.strToNum(list[10])
 	
-def addItem(l):
-	item=Item()
-	item.name=l[4]
-	item.server=l[6]
-	item.amount=l[7]
-	item.tPrice=convertToNum(l[8])
-	item.service=convertToNum(l[10])
-	return item
-	
 def createBill():
 	bill=Bill()
 	bill.loc=None
