@@ -2,6 +2,11 @@ import codecs
 import pickle
 import re
 import datetime
+import csv
+pMonth="0120"
+
+def breakCSV(text):
+		return ['{}'.format(x) for x in list(csv.reader([text], delimiter=','))[0]]
 
 def sumTotalOfDb():
 	max=0
@@ -18,67 +23,52 @@ class Transaction():
 		self.amount=amount
 		self.priceTotal=priceTotal
 		self.service=service
-class Bill():
-	items=[]
+		
+class Billy():
+	def __init__(self,list):
+		self.ID=list[4]
+		self.totalNet=0
+		self.total=0
+		self.serviceTotal=0
+		self.loc=None
+		self.date=None
+		self.items=[]
+		self.payments=[]
+		self.deposits=[]
 	
 class Item:
-	
 	def strToNum(n):
 		if n:
 			return float(re.sub('[£,", ]','',n))
 		else:
 			return 0
 	
-	def __init__(self,list):
-		self.name=list[4]
-		self.server=list[6]
-		self.amount=list[7]
-		self.tPrice=Item.strToNum(list[8])
-		self.service=Item.strToNum(list[10])
-	
-def createBill():
-	bill=Bill()
-	bill.loc=None
-	bill.total=0
-	bill.service=0
-	bill.date=None
-	return bill
-	
-	
-def updateService(item):
-	return float(item.service)
-
-def updateTotal(item):
-	try:
-		return float(item.total)
-	except :
-		print(item.total)
-	
+	def __init__(self,list,db):
+		self.name=list[3]
+		self.server=list[5]
+		self.amount=list[6]
+		try:
+			self.tPrice=Item.strToNum(list[7])
+		except:
+			self.tPrice=Item.strToNum((list[9]))
+		db[list[4]].total+=self.tPrice
 
 def parseSalesData(month):
 	e=codecs.open("Reports/SalesDetailed"+str(month)+".csv","r",encoding='utf-8').readlines()
+	data=[breakCSV(l)[1:9] for l in e[1:]]
 	db={}
-	for n in range(len(e)-1):
-		w=e[n].split(",")
-		billId=w[5]
-		if billId in db:
-			item=Item(w)
-			db[billId].total+=float(item.tPrice)
-			db[billId].service+=updateService(item)
-			db[billId].items.append(item)
-		elif billId == "CheckItemID":
-				pass
-		else:
-			db[billId]=createBill()
-			db[billId].loc=w[1]
+	
+	for l in data:
+		if l:
+			b=Billy(l)
+			if not b.ID in db:
+				db[b.ID]=b
+			db[b.ID].items.append(Item(l,db))
 	pickle.dump(db,open("db.pickle","wb"))
 	return db
 
 
-
-e=codecs.open("Reports/PaymentData11.csv","r",encoding='utf-8').readlines()
-db=parseSalesData(11)
-del e
+db=parseSalesData(pMonth)
 
 def paymentType(info,pay,billID,sD):
 	pType=info[4]
@@ -112,36 +102,63 @@ def createBillID(sD,info,newID):
 		return info[3]
 	else:
 		newID.append(info)
+		
+class Payment:
+	def __init__(self,l,db):
+		self.pay=float(re.sub(",","",l[12]))
+		self.type=l[9]
+		self.service=float(re.sub(",","",l[11]))
+		self.netPay=self.pay-self.service
+		db[l[1]].serviceTotal+=self.service
+		db[l[1]].date=datetime.datetime.strptime(l[6],'%d %b %Y %H:%M:%S')
+		db[l[1]].loc=l[5]
+		
+		
+		
+class Deposit:
+	def __init__(self,l):
+		self.pay=float(re.sub(",","",l[12]))
 
+def trackTransaction(i,billID):
+	
+	"""For dubugging"""
+	l=[]
+	if i:
+		if billID == i[1]:
+			print(i)
+			l.append(i)
+		
 
-
-def parsePaymentData(month,sD):
+def parsePaymentData(month,db):
 	newID=[]
 	e=codecs.open("Reports/PaymentData"+str(month)+".csv","r",encoding="utf-8").readlines()
-	for n in range(1,len(e)):
-		pay=e[n].split('"')
-		if "\r\n" in pay:
-			# needs to get rid of this line before it gets here , for timebeing fix
-			pass
-		else:
-			info=pay[0].split(",")
-			billID=createBillID(sD,info,newID)
-			if billID:
-				parseDate(info,billID,sD)
-				if str(billID) in sD:
-					paymentType(info,pay,billID,sD)
-					tableNum(info,pay,billID,sD)
-				else:
-					pass
-					#add function to handle not processed billID
-			else:
-				billID=info[2]
-				db[billID]=createBill()
-	return sD
+	data=[breakCSV(l)[2:] for l in e]
+	for n in data:
+		if n:
+			#if n[1]=='1483618':
+				#print(n)
+			#print(n)
+			if n[1] in db:
+				if n[2] == 'Payment':
+					db[n[1]].payments.append(Payment(n,db))
+				elif n[2] == 'DepositRedeemed':
+					db[n[1]].deposits.append(Deposit(n))
+	return db
 
 	
-y=parsePaymentData(11,db)
-		
-pickle.dump(y,open('db.pickle','wb'))
+db=parsePaymentData(pMonth,db)
 
-newestDate=datetime.datetime(2019,11,26)
+def fixOnlyDepositBill():
+	for p in db:
+		if len(db[p].payments)==0:
+			print("yh")
+			if db[p].deposits:
+				print(p)
+				db[p].serviceTotal=db[p].total*0.125
+		
+pickle.dump(db,open('db.pickle','wb'))
+
+
+
+
+
