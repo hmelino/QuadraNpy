@@ -3,7 +3,6 @@ import pickle
 import re
 import datetime
 import csv
-pMonth="0120"
 
 def breakCSV(text):
 		return ['{}'.format(x) for x in list(csv.reader([text], delimiter=','))[0]]
@@ -47,10 +46,13 @@ class Item:
 		self.name=list[3]
 		self.server=list[5]
 		self.amount=list[6]
-		try:
-			self.tPrice=Item.strToNum(list[7])
-		except:
-			self.tPrice=Item.strToNum((list[9]))
+		if list[7]=='(£0.01)'or list[7]=='(£0.02)':
+			self.tPrice=0.0
+		else:
+			try:
+				self.tPrice=Item.strToNum(list[7])
+			except:
+				self.tPrice=Item.strToNum((list[9]))
 		db[list[4]].total+=self.tPrice
 
 def parseSalesData(month):
@@ -64,11 +66,11 @@ def parseSalesData(month):
 			if not b.ID in db:
 				db[b.ID]=b
 			db[b.ID].items.append(Item(l,db))
-	pickle.dump(db,open("db.pickle","wb"))
+	#pickle.dump(db,open("db.pickle","wb"))
 	return db
 
 
-db=parseSalesData(pMonth)
+
 
 def paymentType(info,pay,billID,sD):
 	pType=info[4]
@@ -107,7 +109,10 @@ class Payment:
 	def __init__(self,l,db):
 		self.pay=float(re.sub(",","",l[12]))
 		self.type=l[9]
-		self.service=float(re.sub(",","",l[11]))
+		if l[11]:
+			self.service=float(re.sub(",","",l[11]))
+		else:
+			self.service=0
 		self.netPay=self.pay-self.service
 		db[l[1]].serviceTotal+=self.service
 		db[l[1]].date=datetime.datetime.strptime(l[6],'%d %b %Y %H:%M:%S')
@@ -120,8 +125,7 @@ class Deposit:
 		self.pay=float(re.sub(",","",l[12]))
 
 def trackTransaction(i,billID):
-	
-	"""For dubugging"""
+	"""For debugging"""
 	l=[]
 	if i:
 		if billID == i[1]:
@@ -135,9 +139,6 @@ def parsePaymentData(month,db):
 	data=[breakCSV(l)[2:] for l in e]
 	for n in data:
 		if n:
-			#if n[1]=='1483618':
-				#print(n)
-			#print(n)
 			if n[1] in db:
 				if n[2] == 'Payment':
 					db[n[1]].payments.append(Payment(n,db))
@@ -145,8 +146,6 @@ def parsePaymentData(month,db):
 					db[n[1]].deposits.append(Deposit(n))
 	return db
 
-	
-db=parsePaymentData(pMonth,db)
 
 def fixOnlyDepositBill():
 	for p in db:
@@ -155,10 +154,35 @@ def fixOnlyDepositBill():
 			if db[p].deposits:
 				print(p)
 				db[p].serviceTotal=db[p].total*0.125
-		
-pickle.dump(db,open('db.pickle','wb'))
+				
+def joinMonthResults(newData):
+	loadedTotal=0
+	try:
+		savedData=pickle.load(open("db.pickle","rb"))
+		print(f"Loaded {len(savedData)} entries")
+	except FileNotFoundError:
+		pickle.dump(newData,open('db.pickle','wb'))
+		print(f"File doesnt exists, created new file with {len(newData)} entries")
+		return None
+	newEntries=0
+	for t in newData:
+		loadedTotal+=1
+		if t in savedData:
+			pass
+		else:
+			newEntries+=1
+			savedData[t]=newData[t]
+	if newEntries==0:
+		print("No new data")
+		return None
+	print(f'{newEntries} new entries')
+	print(f'New db is :{len(savedData)}')
+	print("Saving ...")
+	pickle.dump(savedData,open('db.pickle','wb'))
+	print('Done ')
 
-
-
-
-
+def start():
+	pMonth=str(input("Type in month to process\n"))
+	db=parseSalesData(pMonth)
+	db=parsePaymentData(pMonth,db)
+	joinMonthResults(db)

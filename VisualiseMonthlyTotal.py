@@ -1,6 +1,6 @@
 import pickle
 import matplotlib.pyplot as plt
-from main import Bill
+from main import Billy
 db=pickle.load(open("db.pickle","rb"))
 
 dates={}

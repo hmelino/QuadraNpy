@@ -8,7 +8,7 @@ j2019=np.array(j19)
 
 ind = np.arange(len(j2019)) 
 
-width = 0.35
+width = 0.3
 plt.bar(ind, j2019, width, label='2019',color="LightSalmon")
 plt.bar(ind+width , j2020, width,label='2020', color="OrangeRed")
 
@@ -32,6 +32,5 @@ ax=plt.subplot()
 plt.show()
 #plt.plot(chartValues)
 
-plt.show()
 print('yh')
 	
