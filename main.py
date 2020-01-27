@@ -54,7 +54,7 @@ class Item:
 			except:
 				self.tPrice=Item.strToNum((list[9]))
 		db[list[4]].total+=self.tPrice
-
+"""
 def parseSalesData(month):
 	e=codecs.open("Reports/SalesDetailed"+str(month)+".csv","r",encoding='utf-8').readlines()
 	data=[breakCSV(l)[1:9] for l in e[1:]]
@@ -66,8 +66,8 @@ def parseSalesData(month):
 			if not b.ID in db:
 				db[b.ID]=b
 			db[b.ID].items.append(Item(l,db))
-	#pickle.dump(db,open("db.pickle","wb"))
 	return db
+"""
 
 
 
