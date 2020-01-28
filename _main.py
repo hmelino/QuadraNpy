@@ -9,7 +9,7 @@ class Sales:
 	import datetime
 	import time
 	import difflib
-	
+	from _graphFunc import plotGraph
 	
 	db={}
 	oldestDay=None
@@ -21,7 +21,7 @@ class Sales:
 			self.pay=float(Sales.re.sub(",","",l[12]))
 			self.type=l[9]
 			if l[11]:
-				self.service=float(Sales.re.sub(",","",l[11]))
+					self.service=float(Sales.re.sub(",","",l[11]))
 			else:
 				self.service=0
 			self.netPay=self.pay-self.service
@@ -34,8 +34,6 @@ class Sales:
 				Sales.oldestDay=date
 			if date > Sales.newestDay:
 				Sales.newestDay=date
-				
-				
 			Sales.db[l[1]].date=date
 			Sales.db[l[1]].loc=l[5]
 	
@@ -74,13 +72,15 @@ class Sales:
 				except IndexError:
 					self.tPrice=self.strToNum((list[9]))
 			Sales.db[list[4]].total+=self.tPrice
-	
-	def __init__ (self):
-		pass
 		
+	def addSalesNPayments(self,mmYY:str):
+		Sales.salesData(self,"Reports/SalesDetailed"+mmYY)
+		Sales.paymentData(self,"Reports/PaymentData"+mmYY)
+	
 	def salesData(self,path):
 		count=0
 		e=Sales.codecs.open(path+".csv","r",encoding='utf-8').readlines()
+		
 		data=[Sales.__breakCSV__(l)[1:9] for l in e[1:]]
 		
 		for l in data:
@@ -89,6 +89,7 @@ class Sales:
 				if not b.ID in Sales.db:
 					Sales.db[b.ID]=b
 				Sales.db[b.ID].items.append(Sales.Item(l))
+				count+=1
 		print(f"Added {count} entries")
 				
 	def paymentData(self,paymentsPath):
@@ -131,54 +132,30 @@ class Sales:
 		else:
 			fromDate=Sales.datetime.datetime.strptime(fromDate,'%d.%m.%Y').date()
 			
-		
 		if toDate is None:
 			toDate=Sales.newestDay
 		else:
 			toDate=Sales.datetime.datetime.strptime(toDate,'%d.%m.%Y').date()
-		
 		searchedItem=Sales.difflib.get_close_matches(searchedItem,Sales.itemsList)[0]
 		print(f"Searching for {searchedItem} ?")
 		start=Sales.time.time()
-		dates={}
+		datesNValues={}
 		totalCount=0
 		for t in Sales.db:
 			if Sales.db[t].date:
 				date=Sales.db[t].date.date()
 				if date>=fromDate.date() and date<=toDate.date():
-					if date not in dates:
-						dates[date]=0
+					if date not in datesNValues:
+						datesNValues[date]=0
 					for i in range(len(Sales.db[t].items)):
 						if searchedItem in Sales.db[t].items[i].name:
-							dates[date]+=1
+							datesNValues[date]+=1
 							totalCount+=1
-
-		sortedDates=sorted(dates,key=lambda x:x)
-		datesList=[dates[v] for v in sortedDates]
-		from matplotlib import pyplot as plt
-		plt.plot(datesList)
+							
 		finish=Sales.time.time()-start
 		print(finish)
 		print(f"Total sold {totalCount} of {searchedItem}")
-		
-		#new Stuff
-		
-		import numpy as np
-		fig=plt.figure()
-		plt.plot(datesList)
-		ax = fig.add_subplot(1, 1, 1)
-		dataRange=(toDate-fromDate).days
-		print(dataRange)
-		howOften=(dataRange/4.9)
-		midPoints=int(dataRange/howOften)
-		major_ticks = np.arange(0, dataRange, midPoints)
-		ax.set_xticks(major_ticks)
-		
-		labelsis=["Oct 18","Dec 18","Feb 19","Apr 19","Jun 19","Aug 19","Oct 19","Dec 19","Feb 20"]
-		29
-		#labelsis=[Sales.datetime.datetime.strftime((fromDate+Sales.datetime.timedelta(v)),"%d-%m") for v in range(dataRange/6)]
-		ax.set_xticklabels(labels=labelsis)
-		plt.show()
+		Sales.plotGraph(datesNValues)
 	
 		
 		
@@ -187,5 +164,4 @@ class Sales:
 report = Sales()
 report.salesData("Reports/SalesDetailed0119")
 report.paymentData("Reports/PaymentData0119")
-w=report.getItemsList()
 report.findTotalsForAYear("Cappucino")
