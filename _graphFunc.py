@@ -10,6 +10,7 @@ def getLabelsX(dates):
 		return datetime.datetime.strftime(date,dFormat)
 	
 	def dateFormat():
+		#choose format for graph DD/MM or MM/YY based on date range
 		period=(max(dates)-min(dates)).days
 		if daysRange<32:
 			return "%d/%m"
