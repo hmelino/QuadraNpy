@@ -11,6 +11,8 @@ class Sales:
 	import difflib
 	from _graphFunc import getLabelsX
 	from matplotlib import pyplot as plt
+	import matplotlib
+	from style import ownStyle
 	
 	db={}
 	oldestDay=None
@@ -163,17 +165,26 @@ class Sales:
 		print(finish)
 		print(f"Total sold {totalCount} of {searchedItem}")
 		
+		Sales.ownStyle(Sales.graphObject)
 		if Sales.labelsX is None:
-			print("yh")
 			Sales.labelsX=Sales.getLabelsX(dates)
 			fig = Sales.graphObject.figure()
 			ax = fig.add_subplot(1, 1, 1)
 			ax.set_xticklabels(labels=Sales.labelsX)
+
+
+		Sales.graphObject.grid(which='minor', linestyle=':', linewidth='0.5', color='#9E807E')
+		Sales.graphObject.grid(which='major', linestyle=':', linewidth='0.5', color='#9E807E')
 		Sales.graphObject.plot(values,label=searchedItem)
+		print(values)
 		Sales.graphObject.legend()
 		Sales.graphObject.show()
+
+
 		
 report = Sales()
 report.salesData("Reports/SalesDetailed0119")
 report.paymentData("Reports/PaymentData0119")
 report.findTotal("Cappucino")
+report.findTotal("Flat white")
+report.findTotal("Latte")
