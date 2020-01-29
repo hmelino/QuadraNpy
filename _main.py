@@ -1,17 +1,12 @@
-"""
-to change
-- remove csv from absolute path ? 
-"""
 class Sales:
-	import codecs
-	import csv
-	import re
+	import codecs as __codecs
+	import csv as __csv
+	import re as re
 	import datetime
 	import time
 	import difflib
 	from _graphFunc import getLabelsX
-	from matplotlib import pyplot as plt
-	import matplotlib
+	from matplotlib import pyplot as __plt
 	from style import ownStyle
 	
 	db={}
@@ -19,7 +14,7 @@ class Sales:
 	newestDay=None
 	itemsList=None
 	dataRange=None
-	graphObject=plt
+	graphObject=__plt
 	labelsX=None
 	
 	class Payment:
@@ -86,7 +81,7 @@ class Sales:
 	
 	def salesData(self,path):
 		count=0
-		e=Sales.codecs.open(path+".csv","r",encoding='utf-8').readlines()
+		e=Sales.__codecs.open(path+".csv","r",encoding='utf-8').readlines()
 		
 		data=[Sales.__breakCSV__(l)[1:9] for l in e[1:]]
 		
@@ -101,7 +96,7 @@ class Sales:
 				
 	def paymentData(self,paymentsPath):
 		count=0
-		raw=self.codecs.open(paymentsPath+".csv","r",encoding="utf-8").readlines()
+		raw=self.__codecs.open(paymentsPath+".csv","r",encoding="utf-8").readlines()
 		data=[Sales.__breakCSV__(l)[2:] for l in raw]
 		for line in data:
 			if line:
@@ -116,7 +111,7 @@ class Sales:
 		Sales.dataRange=(Sales.newestDay-Sales.oldestDay).days
 						
 	def __breakCSV__(text):
-		return ['{}'.format(x) for x in list(Sales.csv.reader([text], delimiter=','))[0]]
+		return ['{}'.format(x) for x in list(Sales.__csv.reader([text], delimiter=','))[0]]
 		
 	def getItemsList(db=db):
 		print("Getting Items List")
@@ -144,7 +139,7 @@ class Sales:
 		else:
 			toDate=Sales.datetime.datetime.strptime(toDate,'%d.%m.%Y').date()
 		searchedItem=Sales.difflib.get_close_matches(searchedItem,Sales.itemsList)[0]
-		print(f"Searching for {searchedItem} ?")
+		print(f"Searching for {searchedItem}.")
 		start=Sales.time.time()
 		datesNValues={}
 		totalCount=0
@@ -176,15 +171,5 @@ class Sales:
 		Sales.graphObject.grid(which='minor', linestyle=':', linewidth='0.5', color='#9E807E')
 		Sales.graphObject.grid(which='major', linestyle=':', linewidth='0.5', color='#9E807E')
 		Sales.graphObject.plot(values,label=searchedItem)
-		print(values)
 		Sales.graphObject.legend()
 		Sales.graphObject.show()
-
-
-		
-report = Sales()
-report.salesData("Reports/SalesDetailed0119")
-report.paymentData("Reports/PaymentData0119")
-report.findTotal("Cappucino")
-report.findTotal("Flat white")
-report.findTotal("Latte")
