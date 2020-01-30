@@ -16,6 +16,7 @@ class Sales:
 	dataRange=None
 	graphObject=__plt
 	labelsX=None
+	itemSoldCount=0
 	
 	class Payment:
 		def __init__(self,l,db):
@@ -91,28 +92,41 @@ class Sales:
 				if not b.ID in Sales.db:
 					Sales.db[b.ID]=b
 				Sales.db[b.ID].items.append(Sales.Item(l))
-				count+=1
-		print(f"Added {count} items")
+				Sales.itemSoldCount+=1
 				
 	def paymentData(self,paymentsPath):
-		count=0
 		raw=self.__codecs.open(paymentsPath+".csv","r",encoding="utf-8").readlines()
 		data=[Sales.__breakCSV__(l)[2:] for l in raw]
 		for line in data:
 			if line:
 				if line[1] in Sales.db:
 					if line[2] == 'Payment':
-						count+=1
 						Sales.db[line[1]].payments.append(Sales.Payment(line,Sales.db))
 					elif line[2] == 'DepositRedeemed':
-						count+=1
 						Sales.db[line[1]].deposits.append(Sales.Deposit(line))
-		print(f"Added {count} payments")
 		Sales.dataRange=(Sales.newestDay-Sales.oldestDay).days
 						
 	def __breakCSV__(text):
 		return ['{}'.format(x) for x in list(Sales.__csv.reader([text], delimiter=','))[0]]
 		
+	def loadWholeYear(self,YY):
+		if type(YY) is int:
+			YY=str(YY)
+		for m in range(1,13):
+			month=f"{m:02d}"
+			Sales.salesData(self,"Reports/SalesDetailed"+month+YY)
+			Sales.paymentData(self,"Reports/PaymentData"+month+YY)
+			print(month)
+		
+	def saveDB(self):
+		import pickle
+		pickle.dump(Sales.db,open("savedDB.pickle","wb"))
+		
+	def loadDB(self):
+		import pickle
+		Sales.db=pickle.load(open("savedDB.pickle","rb"))
+		
+			
 	def getItemsList(db=db):
 		print("Getting Items List")
 		items=[]
@@ -167,9 +181,12 @@ class Sales:
 			ax = fig.add_subplot(1, 1, 1)
 			ax.set_xticklabels(labels=Sales.labelsX)
 
-
 		Sales.graphObject.grid(which='minor', linestyle=':', linewidth='0.5', color='#9E807E')
 		Sales.graphObject.grid(which='major', linestyle=':', linewidth='0.5', color='#9E807E')
 		Sales.graphObject.plot(values,label=searchedItem)
 		Sales.graphObject.legend()
 		Sales.graphObject.show()
+		
+o=Sales()
+o.loadDB()
+o.findTotal("Dash Tonic")
