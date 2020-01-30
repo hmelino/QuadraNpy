@@ -186,7 +186,3 @@ class Sales:
 		Sales.graphObject.plot(values,label=searchedItem)
 		Sales.graphObject.legend()
 		Sales.graphObject.show()
-		
-o=Sales()
-o.loadDB()
-o.findTotal("Dash Tonic")
