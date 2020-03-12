@@ -1,5 +1,7 @@
 /db.pickle
 /Reports/*
 /items.pickle
-
+/__pycache__/
 /savedDB.pickle
+.vscode/settings.json
+*.pickle

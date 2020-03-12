@@ -20,16 +20,7 @@ class Sales:
 	itemSoldCount=0
 	
 	class Payment:
-		def __init__(self,l,db):
-			self.pay=float(Sales.re.sub(",","",l[12]))
-			self.type=l[9]
-			if l[11]:
-					self.service=float(Sales.re.sub(",","",l[11]))
-			else:
-				self.service=0
-			self.netPay=self.pay-self.service
-			Sales.db[l[1]].serviceTotal+=self.service
-			date=Sales.datetime.datetime.strptime(l[6],'%d %b %Y %H:%M:%S')
+		def updateOldestNewestDay(self,date):
 			if Sales.oldestDay == None:
 				Sales.oldestDay=date
 				Sales.newestDay=date
@@ -38,16 +29,36 @@ class Sales:
 				Sales.oldestDay=date
 			if date > Sales.newestDay:
 				Sales.newestDay=date
-			Sales.db[l[1]].date=date
-			Sales.db[l[1]].loc=l[5]
+
+		def __init__(self,l,db):
+			billId=l[1]
+			self.pay=float(Sales.re.sub(",","",l[12]))
+			self.type=l[9]
+			self.service=0
+			if l[11]:
+					self.service=float(Sales.re.sub(",","",l[11]))	
+			self.netPay=self.pay-self.service
+
+			if billId not in Sales.db:
+			#create bill if doesnt exist yet
+				print(f'new exntry {billId}')
+				Sales.db[billId]=Sales.Billy(billId)
+			
+			date=Sales.datetime.datetime.strptime(l[6],'%d %b %Y %H:%M:%S')
+			self.updateOldestNewestDay(date)
+			Sales.db[billId].date=date
+			Sales.db[billId].serviceTotal+=self.service
+			Sales.db[billId].loc=l[5]
 			
 	class Deposit:
-		def __init__(self,l):
-			self.pay=float(Sales.re.sub(",","",l[12]))
+		def __init__(self,row):
+			self.pay=float(Sales.re.sub(",","",row[12]))
+			self.name=row[16]
+
 	
 	class Billy():
-		def __init__(self,list):
-			self.ID=list[4]
+		def __init__(self,billID):
+			self.ID=billID
 			self.totalNet=0
 			self.total=0
 			self.serviceTotal=0
@@ -76,18 +87,23 @@ class Sales:
 				except IndexError:
 					self.tPrice=self.strToNum((list[9]))
 			Sales.db[list[4]].total+=self.tPrice
+			
 	def loadFolder(self,path):
 		import os
 		directory=os.fsencode(path)
 		files = [str(f).split("'")[1] for f in os.listdir(directory)]
 		for f in files:
-			strName=str(f.lower())
-			if 'sales' in strName:
-				Sales.salesData(self,f'{path}/{f}')
-			elif 'payment' in strName:
-				Sales.paymentData(self,f'{path}/{f}')
-			else:
-				print(f'Unrecognised file {f}')
+			fullPath=f'{path}/{f}'
+			with open(fullPath,'r') as file:
+				#Assign correct file to its processing function Sales/Payment reports
+				data=file.readlines()[0].split(',')
+				if data[4] == 'PaymentName':
+					self.paymentData(fullPath)
+				elif data[4] == 'Description':
+					self.salesData(fullPath)
+				else:
+					print(f'Unrecognised file {f}')
+				print(f'Loaded {f}')
 		
 	def addSalesNPayments(self,mmYY:str): 
 		Sales.salesData("Reports/SalesDetailed"+mmYY)
@@ -96,34 +112,44 @@ class Sales:
 	
 	def salesData(self,path):
 		count=0
-		e=Sales.__codecs.open(path,"r",encoding='utf-8').readlines()
+		raw=Sales.__codecs.open(path,"r",encoding='utf-8').readlines()
+		data=[Sales.__breakCSV__(l)[1:9] for l in raw[1:]]
 		
-		data=[Sales.__breakCSV__(l)[1:9] for l in e[1:]]
-		
-		for l in data:
-			if l:
-				b=Sales.Billy(l)
-				if not b.ID in Sales.db:
-					Sales.db[b.ID]=b
-				Sales.db[b.ID].items.append(Sales.Item(l))
+		for row in data:
+			if row:
+				billID=row[4]
+				if billID not in Sales.db:
+					Sales.db[billID]=Sales.Billy(billID)
+				
+				Sales.db[billID].items.append(Sales.Item(row))
 				Sales.itemSoldCount+=1
 				
 	def paymentData(self,paymentsPath):
-		
-		def checkData(data):
-			if data[0][0]!='BillheaderID':
-				print(f'Corrupted file {paymentsPath}')
-				return False
+		def addDeposit(billID,line):
+			deposit=line
+			print(line)
+
 		raw=self.__codecs.open(paymentsPath,"r",encoding="utf-8").readlines()
-		data=[Sales.__breakCSV__(l)[2:] for l in raw]
-		checkData(data)
-		for line in data:
-			if line:
-				if line[1] in Sales.db:
-					if line[2] == 'Payment':
-						Sales.db[line[1]].payments.append(Sales.Payment(line,Sales.db))
-					elif line[2] == 'DepositRedeemed':
-						Sales.db[line[1]].deposits.append(Sales.Deposit(line))
+		data=[Sales.__breakCSV__(l)[2:] for l in raw][1:]
+		for row in data:
+			if row:
+			# protection against empty rows in report
+				billID=row[1]
+				transType=row[2]
+				if billID in Sales.db:
+				#if transaction exists
+					if transType == 'Payment':
+						Sales.db[billID].payments.append(Sales.Payment(row,Sales.db))
+					elif transType == 'DepositRedeemed':
+						Sales.db[billID].deposits.append(Sales.Deposit(row))
+				else:
+					Sales.db[billID]=Sales.Billy(billID)
+					if transType == 'Payment':
+						Sales.db[billID].payments.append(Sales.Payment(row,Sales.db))
+					elif transType == 'DepositRedeemed':
+						#Sales.db[billID]=self.Billy(billID)
+						Sales.db[billID].deposits.append(Sales.Deposit(row))
+
 		Sales.dataRange=(Sales.newestDay-Sales.oldestDay).days
 						
 	def __breakCSV__(text):

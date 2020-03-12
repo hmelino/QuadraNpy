@@ -1,1 +1,1 @@
-from QuadraNpy.main import Sales
+from ._graphFunc import getLabelsX
