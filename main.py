@@ -5,9 +5,10 @@ class Sales:
 	import datetime
 	import time
 	import difflib
-	from _graphFunc import getLabelsX
+	from QuadraNpy._graphFunc import getLabelsX
 	from matplotlib import pyplot as __plt
-	from style import ownStyle
+	from QuadraNpy.style import ownStyle
+	
 	
 	db={}
 	oldestDay=None
@@ -32,6 +33,7 @@ class Sales:
 			if Sales.oldestDay == None:
 				Sales.oldestDay=date
 				Sales.newestDay=date
+				
 			if date < Sales.oldestDay:
 				Sales.oldestDay=date
 			if date > Sales.newestDay:
@@ -74,15 +76,27 @@ class Sales:
 				except IndexError:
 					self.tPrice=self.strToNum((list[9]))
 			Sales.db[list[4]].total+=self.tPrice
+	def loadFolder(self,path):
+		import os
+		directory=os.fsencode(path)
+		files = [str(f).split("'")[1] for f in os.listdir(directory)]
+		for f in files:
+			strName=str(f.lower())
+			if 'sales' in strName:
+				Sales.salesData(self,f'{path}/{f}')
+			elif 'payment' in strName:
+				Sales.paymentData(self,f'{path}/{f}')
+			else:
+				print(f'Unrecognised file {f}')
 		
 	def addSalesNPayments(self,mmYY:str): 
-		Sales.salesData(self,"Reports/SalesDetailed"+mmYY)
-		Sales.paymentData(self,"Reports/PaymentData"+mmYY)
+		Sales.salesData("Reports/SalesDetailed"+mmYY)
+		Sales.paymentData("Reports/PaymentData"+mmYY)
 		print(f"Data range is from {Sales.oldestDay} to {Sales.newestDay}")
 	
 	def salesData(self,path):
 		count=0
-		e=Sales.__codecs.open(path+".csv","r",encoding='utf-8').readlines()
+		e=Sales.__codecs.open(path,"r",encoding='utf-8').readlines()
 		
 		data=[Sales.__breakCSV__(l)[1:9] for l in e[1:]]
 		
@@ -95,8 +109,14 @@ class Sales:
 				Sales.itemSoldCount+=1
 				
 	def paymentData(self,paymentsPath):
-		raw=self.__codecs.open(paymentsPath+".csv","r",encoding="utf-8").readlines()
+		
+		def checkData(data):
+			if data[0][0]!='BillheaderID':
+				print(f'Corrupted file {paymentsPath}')
+				return False
+		raw=self.__codecs.open(paymentsPath,"r",encoding="utf-8").readlines()
 		data=[Sales.__breakCSV__(l)[2:] for l in raw]
+		checkData(data)
 		for line in data:
 			if line:
 				if line[1] in Sales.db:
