@@ -17,15 +17,13 @@ QuadraNpy uses a number of open source projects to work properly:
 
 ### How to use
 
-QuadraNpy requires reports named 'SalesDetailedMMYY.csv' and 'PaymentDataMMYY.csv' , where MMYY are month and year of reports, for example 'SalesDetailed0319.csv' is report from March 2019.
+QuadraNpy requires 'PaymentData.csv' and 'SalesDetailed.csv' from same time period (month/week/year ...)
 
-Reports needs to be in folder called 'Reports' inside module.
+The newest version of QuadraNpy can automaticly detect type of report, so they can be bulk imported from folder, instead of importing them one by one.
 
 ```sh
-$ import QuadraNpy
-$ ourVariable= QuadraNpy
-$ ourVariable.addSalesNPayments('0319')
-$ ourVariable.findTotal('Cappucino')
+$ import QuadraNpy.main import Sales
+$ yearlyReport = Sales()
+$ yearlyReport.loadFolder('D:\Reports')
+$ yearlyReport.findTotal('Cappucino')
 ```
-
-

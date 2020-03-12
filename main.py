@@ -8,6 +8,7 @@ class Sales:
 	from QuadraNpy._graphFunc import getLabelsX
 	from matplotlib import pyplot as __plt
 	from QuadraNpy.style import ownStyle
+	import pickle
 	
 	
 	db={}
@@ -87,7 +88,12 @@ class Sales:
 				except IndexError:
 					self.tPrice=self.strToNum((list[9]))
 			Sales.db[list[4]].total+=self.tPrice
-			
+	def saveDB(self):
+		Sales.pickle.dump(Sales.db,open(f'savedDB.pickle','wb'))
+
+	def loadDB(self):
+		Sales.db=Sales.pickle.load(open(f'savedDB.pickle','rb'))
+		
 	def loadFolder(self,path):
 		import os
 		directory=os.fsencode(path)
@@ -164,13 +170,6 @@ class Sales:
 			Sales.paymentData(self,"Reports/PaymentData"+month+YY)
 			print(month)
 		
-	def saveDB(self):
-		import pickle
-		pickle.dump(Sales.db,open("savedDB.pickle","wb"))
-		
-	def loadDB(self):
-		import pickle
-		Sales.db=pickle.load(open("savedDB.pickle","rb"))
 		
 			
 	def getItemsList(db=db):
