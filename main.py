@@ -93,6 +93,20 @@ class Sales:
 
 	def loadDB(self):
 		Sales.db=Sales.pickle.load(open(f'savedDB.pickle','rb'))
+
+	def countEODValues(self):
+		values={}
+		for t in Sales.db:
+			if Sales.db[t].date:
+				day=Sales.db[t].date.date()
+				dailyTotal=Sales.db[t].total
+				if day not in values:
+					values[day]=0
+				values[day]+=dailyTotal
+		return values
+			
+			
+
 		
 	def loadFolder(self,path):
 		import os
