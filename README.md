@@ -21,9 +21,9 @@ QuadraNpy requires 'PaymentData.csv' and 'SalesDetailed.csv' from same time peri
 
 The newest version of QuadraNpy can automaticly detect type of report, so they can be bulk imported from folder, instead of importing them one by one.
 
-```sh
-$ import QuadraNpy.main import Sales
-$ yearlyReport = Sales()
-$ yearlyReport.loadFolder('D:\Reports')
-$ yearlyReport.findTotal('Cappucino')
+```Python3
+ import QuadraNpy.main import Sales
+ yearlyReport = Sales()
+ yearlyReport.loadFolder('D:\Reports')
+ yearlyReport.findTotal('Cappucino')
 ```
