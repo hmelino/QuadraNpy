@@ -94,6 +94,7 @@ class Sales:
 	def loadDB(self):
 		Sales.db=Sales.pickle.load(open(f'savedDB.pickle','rb'))
 		Sales.updateOldestNewestDayV2(self)
+		print(f'Loaded {len(Sales.db)} items with date range of {Sales.oldestDay} to {Sales.newestDay}')
 
 	def updateOldestNewestDayV2(self):
 		dates=[Sales.db[v].date for v in self.db if Sales.db[v].date]
@@ -112,8 +113,28 @@ class Sales:
 		return values
 			
 			
+	def exportToSQL(self):
+		import sqlite3
+		db=sqlite3.connect('db.db')
+		cur=db.cursor()
+		#cur.execute('CREATE TABLE ITEMS (uniqueid TEXT,id TEXT,date INT,name TEXT,amount INT,server TEXT,price REAL,loc TEXT)')
 
+		uniqueID=0
+		for iD in Sales.db:
+			date=Sales.db[iD].date
+
+			if date:
+				price=Sales.db[iD].total
+				loc=Sales.db[iD].loc
+				for item in Sales.db[iD].items:
+					sqlObjectValues=(uniqueID,iD,date.timestamp(),item.name,int(item.amount),item.server,price,loc)
+					cur.execute('INSERT INTO ITEMS VALUES (?,?,?,?,?,?,?,?)',sqlObjectValues)
+					uniqueID+=1
 		
+		db.commit()
+		cur.close()
+		db.close()
+
 	def loadFolder(self,path):
 		import os
 		directory=os.fsencode(path)
