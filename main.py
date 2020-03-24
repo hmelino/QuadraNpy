@@ -93,6 +93,12 @@ class Sales:
 
 	def loadDB(self):
 		Sales.db=Sales.pickle.load(open(f'savedDB.pickle','rb'))
+		Sales.updateOldestNewestDayV2(self)
+
+	def updateOldestNewestDayV2(self):
+		dates=[Sales.db[v].date for v in self.db if Sales.db[v].date]
+		Sales.oldestDay=min(dates)
+		Sales.newestDay=max(dates)
 
 	def countEODValues(self):
 		values={}
@@ -112,6 +118,7 @@ class Sales:
 		import os
 		directory=os.fsencode(path)
 		files = [str(f).split("'")[1] for f in os.listdir(directory)]
+
 		for f in files:
 			fullPath=f'{path}/{f}'
 			with open(fullPath,'r') as file:
@@ -199,7 +206,8 @@ class Sales:
 		print(finish)
 		Sales.itemsList = uniqueItems
 		return uniqueItems
-	def findTotal(self,searchedItem,fromDate=None,toDate=None):
+
+	def findTotal(self,searchedItem,fromDate=oldestDay,toDate=newestDay):
 		if Sales.itemsList is None:
 			Sales.getItemsList()
 		if fromDate is None:
