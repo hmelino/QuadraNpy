@@ -141,17 +141,18 @@ class Sales:
 		files = [str(f).split("'")[1] for f in os.listdir(directory)]
 
 		for f in files:
-			fullPath=f'{path}/{f}'
-			with open(fullPath,'r') as file:
-				#Assign correct file to its processing function Sales/Payment reports
-				data=file.readlines()[0].split(',')
-				if data[4] == 'PaymentName':
-					self.paymentData(fullPath)
-				elif data[4] == 'Description':
-					self.salesData(fullPath)
-				else:
-					print(f'Unrecognised file {f}')
-				print(f'Loaded {f}')
+			if f.endswith('.csv'):
+				fullPath=f'{path}/{f}'
+				with open(fullPath,'r') as file:
+					#Assign correct file to its processing function Sales/Payment reports
+					data=file.readlines()[0].split(',')
+					if data[4] == 'PaymentName':
+						self.paymentData(fullPath)
+					elif data[4] == 'Description':
+						self.salesData(fullPath)
+					else:
+						print(f'Unrecognised file {f}')
+					print(f'Loaded {f}')
 		
 	def addSalesNPayments(self,mmYY:str): 
 		Sales.salesData("Reports/SalesDetailed"+mmYY)
